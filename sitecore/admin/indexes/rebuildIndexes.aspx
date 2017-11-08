@@ -1,109 +1,99 @@
 ﻿<%@ page language="C#" autoeventwireup="true" %>
-
 <%@ import namespace="Sitecore.ContentSearch.Maintenance" %>
 <%@ import namespace="Sitecore.ContentSearch" %>
-<%@ import namespace="Sitecore.Web.UI.HtmlControls" %>
 <%@ Import Namespace="Sitecore.StringExtensions" %>
 
 <script runat="server">
 
-    List<string> indexes = new List<string>
+    readonly List<string> _indexes = new List<string>
     {
-        "Your_index_1",
-        "Your_index_2",
-        "Your_index_3",
+        "Your_Index_1",
+        "Your_Index_2",
+        "Your_Index_3"
     };
 
-    public string element ="";
-
-  void Page_Load(object sender, System.EventArgs e)
-  {
-    repJobs.DataBind();
-
-    Container.Controls.Clear();
-
-
-      foreach (var index in indexes)
-      {
-          var element = new System.Web.UI.WebControls.Button
-          {
-              ID = "btn_" + index,
-               
-                Text = string.Format("Rebuild Index: '{0}'", index)
-          };
-
-          element.Click += btnRebuildIndex_OnClick;
-    element.Attributes.Add("indexName", index); 
-
-   element.Style.Add(HtmlTextWriterStyle.Padding, "7px 7px");         
-   element.Style.Add(HtmlTextWriterStyle.Margin, "10px 10px");         
-   element.Style.Add(HtmlTextWriterStyle.BackgroundColor, "Green");         
-   element.Style.Add(HtmlTextWriterStyle.Color, "white");         
-    Container.Controls.Add(element);
-
-      }
-  }
- 
-  public IEnumerable<string> Indexes
-  {
-    get
+    void Page_Load(object sender, EventArgs e)
     {
-      return new List<string>{"TechnicalDocuments"};
+        repJobs.DataBind();
+        Container.Controls.Clear();
+
+        foreach (var index in _indexes)
+        {
+            var element = new Button
+            {
+                ID = "btn_" + index,
+
+                Text = string.Format("Rebuild Index: '{0}'", index)
+            };
+
+            element.Click += btnRebuildIndex_OnClick;
+            element.Attributes.Add("indexName", index);
+
+            element.Style.Add(HtmlTextWriterStyle.Padding, "7px 7px");
+            element.Style.Add(HtmlTextWriterStyle.Margin, "10px 10px");
+            element.Style.Add(HtmlTextWriterStyle.BackgroundColor, "Green");
+            element.Style.Add(HtmlTextWriterStyle.Color, "white");
+            Container.Controls.Add(element);
+        }
     }
-  }
 
     private void btnRebuildIndex_OnClick(object sender, EventArgs e)
     {
         output.InnerHtml = "btnRebuildIndex_OnClick";
-        var button = sender as System.Web.UI.WebControls.Button;
+        var button = sender as Button;
         var index = button.Attributes["indexName"];
-    
-        output.InnerHtml = " You've selected the '{0}' index to be rebuilt.  <br/>  click 'Refresh to see the list of Jobs'".FormatWith(index) ;
 
-     IndexCustodian.FullRebuild(ContentSearchManager.GetIndex(index), true);
-     
+        output.InnerHtml = " You've selected the '{0}' index to be rebuilt.  <br/>  click 'Refresh to see the list of Jobs'".FormatWith(index);
+
+        IndexCustodian.FullRebuild(ContentSearchManager.GetIndex(index), true); 
     }
-
-     
-     
-  public IEnumerable<Sitecore.Jobs.Job> Jobs
-  {
-    get
+      
+    public IEnumerable<Sitecore.Jobs.Job> Jobs
     {
-      if (!cbShowFinished.Checked)
-        return Sitecore.Jobs.JobManager.GetJobs().Where(job => job.IsDone == false).OrderBy(job => job.QueueTime);
-      return Sitecore.Jobs.JobManager.GetJobs().OrderBy(job => job.QueueTime);
+        get
+        {
+            if (!cbShowFinished.Checked)
+            { return Sitecore.Jobs.JobManager.GetJobs().Where(job => job.IsDone == false).OrderBy(job => job.QueueTime);}
+            
+            return Sitecore.Jobs.JobManager.GetJobs().OrderBy(job => job.QueueTime);
+        }
     }
-  }
- 
-  protected string GetJobText(Sitecore.Jobs.Job job)
-  {
-    return string.Format("{0}\n\n{1}\n\n{2}", job.Name, job.Category, GetJobMessages(job));
-  }
- 
-  protected string GetJobMessages(Sitecore.Jobs.Job job)
-  {
-    StringBuilder sb = new StringBuilder();
-    if (job.Options.ContextUser != null)
-      sb.AppendLine("Context User: " + job.Options.ContextUser.Name);
-    sb.AppendLine("Priority: " + job.Options.Priority.ToString());
-    sb.AppendLine("Texts:");
-    foreach (string s in job.Status.Messages)
-      sb.AppendLine(s);
-    return sb.ToString();
-  }
- 
-  protected string GetJobColor(Sitecore.Jobs.Job job)
-  {
-    if (job.IsDone)
-      return "#737373";
-    return "#000";
-  }
- 
-  protected void cbShowFinished_CheckedChanged(object sender, EventArgs e)
-  {
-    repJobs.DataBind();
-  }
+
+    protected string GetJobText(Sitecore.Jobs.Job job)
+    {
+        return string.Format("{0}\n\n{1}\n\n{2}", job.Name, job.Category, GetJobMessages(job));
+    }
+
+    protected string GetJobMessages(Sitecore.Jobs.Job job)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        if (job.Options.ContextUser != null)
+        {
+            sb.AppendLine("Context User: " + job.Options.ContextUser.Name);
+        }
+
+        sb.AppendLine("Priority: " + job.Options.Priority);
+        sb.AppendLine("Texts:");
+
+        foreach (string s in job.Status.Messages)
+        {
+            sb.AppendLine(s);
+        }
+        return sb.ToString();
+    }
+
+    protected string GetJobColor(Sitecore.Jobs.Job job)
+    {
+        if (job.IsDone)
+            return "#737373";
+        return "#000";
+    }
+
+    protected void cbShowFinished_CheckedChanged(object sender, EventArgs e)
+    {
+        repJobs.DataBind();
+    }
 
 </script>
 
@@ -113,16 +103,12 @@
     <title>Rebuild Indexes</title>
     <link href="/default.css" rel="stylesheet">
 </head>
+
 <body style="font-size: 14px">
     <form runat="server">
-        <div style="padding: 10px; text-align: center; background-color: #efefef; border-bottom: solid 1px #aaa; border-top: solid 1px white" id="output" runat="server">
-            
-        </div>
-        <div style="padding: 10px; text-align: center; background-color: #efefef; border-bottom: solid 1px #aaa; border-top: solid 1px white" id="Container" runat="server">
-        </div>
+        <div style="padding: 10px; text-align: center; background-color: #efefef; border-bottom: solid 1px #aaa; border-top: solid 1px white" id="output" runat="server"></div>
 
-
-
+        <div style="padding: 10px; text-align: center; background-color: #efefef; border-bottom: solid 1px #aaa; border-top: solid 1px white" id="Container" runat="server"></div>
 
         <div style="padding: 10px; background-color: #efefef; border-bottom: solid 1px #aaa; border-top: solid 1px white">
             <div style="float: left; width: 200px; padding-top: 4px">
@@ -171,7 +157,6 @@
           </ItemTemplate>
         </asp:repeater>
         </div>
-
     </form>
 </body>
 </html>
